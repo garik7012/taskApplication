@@ -5,7 +5,7 @@
 class IndexController
 {
 //отображение стартовой страницы
-    function index()
+  public function index()
     {
         //получаем список всех задач
         $tasks = Task::getAllTasks();
