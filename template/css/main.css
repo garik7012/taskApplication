@@ -11,3 +11,12 @@ body{
 .previewField{
     display: none;
 }
+
+.img{
+    max-height: 150px;
+    max-width: 200px;
+}
+.task{
+    white-space: pre-wrap;
+    word-break: normal;
+}

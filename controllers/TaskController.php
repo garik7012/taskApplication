@@ -9,8 +9,8 @@ class TaskController
     public function addTask(){
         //Создаем массив, в который будем складывать ошибки
         $errors = [];
-        //если есть пост запрос на добавление задачи
-        if (isset($_POST['addTask'])) {
+        //если есть пост запрос
+        if (isset($_POST['userName'])) {
             //Проверяем имя; здесь и далее $errors - передаем ссылку на наш массив с ошибками
             // второе значение - это пременная в которую запишется значение для БД
             $this->checkUserName($errors, $userName);
@@ -20,17 +20,33 @@ class TaskController
             $this->checkTask($errors, $task);
             //Проверяем и если все хорошо - сохраняем картинку
             $this->checkAndSaveImage($errors, $image);
-
+            //проверям посылали мы запрос через AJAX или через HTML форму
+            $isAJAX = !isset($_POST['addTask']);
             //если ошибок не было - создаем задачу
             if ($errors == false) {
-                Task::addTask($userName, $email, $task, $image) ? header('Location: /'): exit('Ошибка');
+                //если задача успешно добавится в БД, то получим true
+                $isAddTaskSuccess = Task::addTask($userName, $email, $task, $image);
+                //если через AJAX
+                if ($isAJAX){
+                    if($isAddTaskSuccess){
+                        echo 'success';
+                        return true;
+                    } else exit('Ошибка');
+                } else //если попали не через AJAX
+                {
+                    $isAddTaskSuccess ? header('Location: /'): exit('Ошибка');
+                }
             } 
             //если ошибки в данных были, то они отобразятся на странице
-            require_once(ROOT . '/views/index.php');
-            return true;
+            if ($isAJAX) {
+                echo json_encode($errors);
+                return true;
+            } else
+                require_once(ROOT . '/views/task/addTask.php');
         }
-        //если пост запроса не было
-        require_once(ROOT . '/views/index.php');
+        //если мы попали сюда не пост запросом, то скорее js не работает
+        //но дадим возможность создать задачу без js
+        require_once(ROOT . '/views/task/addTask.php');
         return true;
     }
 
@@ -90,7 +106,7 @@ class TaskController
         }
         if(strlen($_POST['task']) > 5000) {
             $errors['task'] = "не более 5000 символов";
-        }else $task = strip_tags($_POST['task']);
+        }else $task = htmlspecialchars($_POST['task']);
     }
     //проверка email
     private function checkEmail(&$errors, &$email){
@@ -105,8 +121,12 @@ class TaskController
      * ресайз если нужен
      */
     private function checkAndSaveImage(&$errors, &$image){
-        if(!is_file($_FILES['image']['tmp_name'])){
-            $errors['image'] = 'добавьте картинку';
+        if(!isset($_FILES['userImage'])){
+            $errors['userImage'] = 'добавьте картинку';
+            return;
+        }
+        if(!is_file($_FILES['userImage']['tmp_name'])){
+            $errors['userImage'] = 'добавьте картинку';
             return;
         }
         // Пути загрузки файлов
@@ -117,41 +137,51 @@ class TaskController
         $size = 6000000;
     // -------------------Обработка запроса---------------------------
         // Проверяем тип файла
-        if (!in_array($_FILES['image']['type'], $types)) {
-            $errors['image'] = 'Запрещённый тип файла. Только изображения gif, jpg, png';
+        if (!in_array($_FILES['userImage']['type'], $types)) {
+            $errors['userImage'] = 'Запрещённый тип файла. Только изображения gif, jpg, png';
             return;
         }
-        $imageType = $_FILES['image']['type'];
+        $imageType = $_FILES['userImage']['type'];
         //Проверяем размер файла
-        if ($_FILES['image']['size'] > $size){
-            $errors['image'] = 'Слишком большой размер файла. Не более ' .round($size/1024/1024, 1) . ' MB';
+        if ($_FILES['userImage']['size'] > $size){
+            $errors['userImage'] = 'Слишком большой размер файла. Не более ' .round($size/1024/1024, 1) . ' MB';
             return;
         }
-        if($_FILES['image']['error'] == 0){ // проверка на загрузку файла
-            $fileName = $_FILES["image"]["name"];
+        if($errors == false and $_FILES['userImage']['error'] == 0){ // проверка на загрузку файла
+            $fileName = $_FILES["userImage"]["name"];
             //получаем расширение файла
             $file_ext =  substr(strrchr($fileName, '.'), 1);
             //создаем уникальное имя файла. предполагаем, что загрузка файлов будет происходить не чаще раза в секунду
             $fileName = time() . "." . $file_ext;
             $target = ROOT . $path . $fileName; // путь для загрузки файла
             //если ошибок не было то пермещаем файл и сразу проверяем удачно ли
-            if($errors == false and move_uploaded_file($_FILES['image']['tmp_name'], $target)){
+            if(move_uploaded_file($_FILES['userImage']['tmp_name'], $target)){
                 $image = $path . $fileName;
-                @unlink($_FILES['image']['tmp_name']); // удаляем временный файл
+                @unlink($_FILES['userImage']['tmp_name']); // удаляем временный файл
             }
             switch($imageType) {
                 case "image/gif": $im = imagecreatefromgif($target); break;
                 case "image/jpeg": $im = imagecreatefromjpeg($target); break;
                 case "image/png": $im = imagecreatefrompng($target); break;
             }
-            if(imagesx($im) > 320 or imagesy($im) > 240){
-            $im1 = imagecreatetruecolor(320, 240); // создаем картинку
-            imagecopyresampled($im1,$im,0,0,0,0,320,240,imagesx($im),imagesy($im));
-            imagejpeg($im1, $target, 100); // переводим в jpg
-            imagedestroy($im);
-            imagedestroy($im1);}
-        }else{
-            $errors['image'] = 'Ошибка при загрузке файла';
+            if(min(320/imagesx($im), 240/imagesy($im)) < 1) {
+                $ration = imagesx($im)/imagesy($im);
+                if($ration <= 320/240){
+                    $y = 240;
+                    $x = 240*$ration;
+                } else {
+                    $x = 320;
+                    $y = 320/$ration;
+                }
+
+                $im1 = imagecreatetruecolor($x, $y); // создаем картинку
+                imagecopyresampled($im1,$im,0,0,0,0,$x, $y,imagesx($im),imagesy($im));
+                imagejpeg($im1, $target, 75); // переводим в jpg
+                imagedestroy($im);
+                imagedestroy($im1);
+            }
+        }else if($errors == false){
+            $errors['userImage'] = 'Ошибка при загрузке файла';
         }
 
     }

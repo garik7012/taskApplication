@@ -19,16 +19,19 @@
                         </div>
                         <div class="panel-body">
                             <section class="previewField">
-                                <div class="col-md-12">
+                                <div class="col-sm-12">
                                     <h3 class="userName"></h3>
                                 </div>
-                                <div class="col-md-4">
-                                    <img id="img-preview" class="img-thumbnail" src="/template/users/images/default.png" width="320" height="240" alt="photo">
+                                <div class="col-sm-4">
+                                    <img id="img-preview" class="img-thumbnail img" src="/template/users/images/default.png" alt="photo">
                                     <p class="email"></p>
                                 </div>
-                                <div class="col-md-8">
-                                    <p class="task"></p>
-                                    <p><a href="#" class="btn btn-primary editPreview" role="button">Продолжить</a></p>
+                                <div class="col-sm-8">
+                                    <pre class="task"></pre>
+                                    <p>
+                                        <a href="#" class="btn btn-primary editPreview" role="button">Продолжить</a>
+                                        <a href="#" class="btn btn-primary savePreview" role="button">Сохранить</a>
+                                    </p>
                                     <p><a href="#" class="btn btn-danger deletePreview" role="button">Удалить</a></p>
                                 </div>
                             </section>
@@ -38,15 +41,15 @@
                                       </section>';
                             }else foreach($tasks as $task): ?>
                                     <section id="task_<?=$task['id']?>">
-                                        <div class="col-md-12">
+                                        <div class="col-sm-12">
                                             <h3><?= $task['userName']?></h3>
                                         </div>
-                                        <div class="col-md-4">
-                                            <img class="img-thumbnail" src="<?= $task['image']?>" width="320" height="240" alt="photo">
+                                        <div class="col-sm-4">
+                                            <img class="img-thumbnail img" src="<?= $task['image']?>" alt="photo">
                                             <p><?= $task['email'] ?></p>
                                         </div>
-                                        <div class="col-md-8">
-                                                <p class="showTask"><?= $task['task']?></p>
+                                        <div class="col-sm-8">
+                                                <pre class="showTask task"><?= $task['task']?></pre>
                                             <?php if($task['isComplete']): ?>
                                                 <span class="glyphicon glyphicon-ok text-success"> </span><span> Выполнена!</span>
                                             <?php endif; ?>

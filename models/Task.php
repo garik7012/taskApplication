@@ -12,7 +12,7 @@ class Task
     public static function getAllTasks(){
         $tasks = [];
         $db = Db::getConnection();
-        $sql = "SELECT * FROM tasks";
+        $sql = "SELECT * FROM tasks ORDER BY `id` DESC";
         $result = $db->query($sql);
         foreach($result as $row) {
             $tasks[] = $row;

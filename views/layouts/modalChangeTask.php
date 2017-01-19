@@ -18,7 +18,7 @@
                     <div class="modal-footer">
                         <button type="button" class="btn btn-default" data-dismiss="modal">Закрыть</button>
                         <input type="hidden" name="id" value="">
-                        <input class="btn btn-default btn-primary" name="changeTask" type="submit" value="Сохранить"/>
+                        <input id="changeTask" class="btn btn-default btn-primary" name="changeTask" type="submit" value="Сохранить"/>
                     </div>
                 </form>
             </div>

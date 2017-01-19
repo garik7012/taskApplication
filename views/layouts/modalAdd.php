@@ -6,13 +6,13 @@
                 <h4 class="modal-title" id="myModalLabel">Добавить задачу</h4>
             </div>
             <div class="modal-body">
-                <form action="/task/add" method="POST" enctype="multipart/form-data">
+                <form id="addForm" action="/" method="POST" enctype="multipart/form-data">
                     <div class="row">
                         <div class="col-sm-6">
-                            <input type="file" id="img" multiple accept="image/*" name="image"/><br>
+                            <input type="file" id="userImage" multiple accept="image/*" name="userImage"/><br>
                         </div>
                         <div class="col-sm-6">
-                            <i class="glyphicon glyphicon-arrow-left"></i> Выберите фото для загрузки. <p class="help-block">только JPEG, не более 2MB</p>
+                            <i class="glyphicon glyphicon-arrow-left"></i> Выберите фото для загрузки. <p class="help-block">только JPEG, не более 5MB</p>
                         </div>
                     </div>
                     <div class="row">
