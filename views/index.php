@@ -9,7 +9,11 @@
                                 <div class="panel-title form-title col-sm-7 col-sm-offset-1">Список задач</div>
                                 <div class=" col-sm-4">
                                     <a href="/task/add" class="btn btn-primary addTask" role="button">Добавить свою</a>
-                                    <a href="/user/login" class="btn btn-primary" role="button">Войти</a>
+                                    <?php if(isset($_SESSION['user'])): ?>
+                                    <a href="/user/logout" class="btn btn-primary logout" role="button">Выйти</a>
+                                    <?php else: ?>
+                                    <a href="/user/login" class="btn btn-primary login" role="button">Войти</a>
+                                    <?php endif ?>
                                 </div>
                             </div>
                         </div>
@@ -29,11 +33,11 @@
                                 </div>
                             </section>
                             <?php if(empty($tasks)){
-                                echo '<article>
+                                echo '<section>
                                         <h2>Eще нет задач</h2>
-                                      </article>';
+                                      </section>';
                             }else foreach($tasks as $task): ?>
-                                    <section>
+                                    <section id="task_<?=$task['id']?>">
                                         <div class="col-md-12">
                                             <h3><?= $task['userName']?></h3>
                                         </div>
@@ -42,7 +46,18 @@
                                             <p><?= $task['email'] ?></p>
                                         </div>
                                         <div class="col-md-8">
-                                            <p><?= $task['task']?></p>
+                                                <p class="showTask"><?= $task['task']?></p>
+                                            <?php if($task['isComplete']): ?>
+                                                <span class="glyphicon glyphicon-ok text-success"> </span><span> Выполнена!</span>
+                                            <?php endif; ?>
+                                            <?php if(isset($_SESSION['user']) and $_SESSION['user']['isAdmin']): ?>
+                                                <p><a href="#" class="btn btn-primary editTask" role="button" data-id="<?=$task['id']?>">Редактировать</a></p>
+                                                <p><label>
+                                                        <input type="checkbox" class="checkComplete" data-id="<?= $task['id']?>"
+                                                                <?php if($task['isComplete']) echo 'checked' ?>> Отметить как выполненую
+                                                   </label>
+                                                </p>
+                                            <?php endif; ?>
                                         </div>
                                     </section>
                             <?php endforeach; ?>

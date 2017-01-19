@@ -41,5 +41,35 @@ class Task
             return true;
         } else return false;
     }
+
+    /**
+     *
+     * @return bool - если все хорошо true, иначе false
+     */
+    public static function checkComplete($id, $complete){
+        $db = Db::getConnection();
+        $sql = 'UPDATE `tasks` SET `isComplete` = :complete WHERE `tasks`.`id` = :id;';
+        $result = $db->prepare($sql);
+        $result->bindParam(':id', $id, PDO::PARAM_STR);
+        $result->bindParam(':complete', $complete, PDO::PARAM_STR);
+        if($result->execute()){
+            return true;
+        } else return false;
+    }
+
+    /**
+     *
+     * @return bool - если все хорошо true, иначе false
+     */
+    public static function changeTask($id, $task){
+        $db = Db::getConnection();
+        $sql = 'UPDATE `tasks` SET `task` = :task WHERE `tasks`.`id` = :id;';
+        $result = $db->prepare($sql);
+        $result->bindParam(':id', $id, PDO::PARAM_STR);
+        $result->bindParam(':task', $task, PDO::PARAM_STR);
+        if($result->execute()){
+            return true;
+        } else return false;
+    }
 }
   

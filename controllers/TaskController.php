@@ -33,9 +33,30 @@ class TaskController
         require_once(ROOT . '/views/index.php');
         return true;
     }
+
+    public function checkComplete(){        
+        if (isset($_POST['id']) and $_SESSION['user']['isAdmin']) {           
+            $id = $_POST['id'];
+            $complete = $_POST['complete'];            
+            if(Task::checkComplete($id, $complete)) echo 'success';
+            return true;
+        }
+        //если пост запроса не было или пользователь без админских прав
+        require_once(ROOT . '/views/index.php');
+        return true;
+    }
     
-    
-    
+    public function changeTask(){
+        if (isset($_POST['changeTask']) and $_SESSION['user']['isAdmin']) {
+            $id = $_POST['id'];
+            $task = $_POST['task'];
+            if(Task::changeTask($id, $task)) header('Location: /');
+            return true;
+        }
+        //если пост запроса не было или пользователь без админских прав
+        require_once(ROOT . '/views/index.php');
+        return true;
+    }
     
     
     
@@ -80,7 +101,8 @@ class TaskController
         }
     }
     /*
-     * проверка и сохранение картинки      
+     * проверка и сохранение картинки.
+     * ресайз если нужен
      */
     private function checkAndSaveImage(&$errors, &$image){
         if(!is_file($_FILES['image']['tmp_name'])){
@@ -92,13 +114,14 @@ class TaskController
         // Массив допустимых значений типа файла
         $types = array('image/gif', 'image/png', 'image/jpeg');
         // Максимальный размер файла
-        $size = 5000000;
+        $size = 6000000;
     // -------------------Обработка запроса---------------------------
         // Проверяем тип файла
         if (!in_array($_FILES['image']['type'], $types)) {
             $errors['image'] = 'Запрещённый тип файла. Только изображения gif, jpg, png';
             return;
         }
+        $imageType = $_FILES['image']['type'];
         //Проверяем размер файла
         if ($_FILES['image']['size'] > $size){
             $errors['image'] = 'Слишком большой размер файла. Не более ' .round($size/1024/1024, 1) . ' MB';
@@ -116,6 +139,17 @@ class TaskController
                 $image = $path . $fileName;
                 @unlink($_FILES['image']['tmp_name']); // удаляем временный файл
             }
+            switch($imageType) {
+                case "image/gif": $im = imagecreatefromgif($target); break;
+                case "image/jpeg": $im = imagecreatefromjpeg($target); break;
+                case "image/png": $im = imagecreatefrompng($target); break;
+            }
+            if(imagesx($im) > 320 or imagesy($im) > 240){
+            $im1 = imagecreatetruecolor(320, 240); // создаем картинку
+            imagecopyresampled($im1,$im,0,0,0,0,320,240,imagesx($im),imagesy($im));
+            imagejpeg($im1, $target, 100); // переводим в jpg
+            imagedestroy($im);
+            imagedestroy($im1);}
         }else{
             $errors['image'] = 'Ошибка при загрузке файла';
         }

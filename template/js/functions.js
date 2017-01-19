@@ -1,4 +1,9 @@
 $(document).ready(function() {
+    //модальное окно по клику войти
+    $('.login').click(function () {
+        $('#loginModal').modal();
+        return false;
+    });
     //показываем модальное окно при нажитии кнопки Добавить свою
     $('.addTask').click(function(){
         $('#addModal').modal();
@@ -101,5 +106,33 @@ $(document).ready(function() {
             $('#' + fieldName).after(eF);
             $('#' + fieldName).parent().addClass('has-error');
         }
+    }); //< конец действий при нажитии предпросмотра-------------
+
+    //****************** когда зашли под админом **********************
+    //следим за изменением галочки о выполнении
+    $('.checkComplete').change(function () {
+        var checked = $(this);
+       var complete = $(this).prop('checked');
+       var taskId = $(this).data('id');
+        $.ajax({
+            type: "POST",
+            url: "/task/complete",
+            data: {'id' : taskId,
+                    'complete' : +complete},
+            success: function(msg){
+                if(msg != 'success'){
+                    alert("не удалось. попробуйте позже");
+                    checked.prop("checked", !complete);
+                } else location.reload();
+            }
+        }); 
+    });
+    $('.editTask').click(function () {
+        var taskId = $(this).data('id');
+        var editedTask = $('#task_' + taskId).find('.showTask').text();
+        $('#changeModal').modal();
+        $('#changeModal').find('textarea').text(editedTask);
+        $('#changeModal').find('input[name="id"]').val(taskId);
+        return false;
     });
 });
