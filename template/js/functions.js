@@ -1,4 +1,4 @@
-$(document).ready(function() {
+$(document).ready(function () {
 
     //модальное окно по клику войти
     $('.login').click(function () {
@@ -6,7 +6,7 @@ $(document).ready(function() {
         return false;
     });
     //показываем модальное окно при нажитии кнопки Добавить свою
-    $('.addTask').click(function(){
+    $('.addTask').click(function () {
         $('#addModal').modal();
         return false;
     });
@@ -49,7 +49,7 @@ $(document).ready(function() {
         imgError = false;
     });
     //   -----------действия при нажитии предпросмотра-------------
-    $('.previewTask').click(function(){
+    $('.previewTask').click(function () {
         var errors = false;
         //при повторной отправке удаляем все ошибки
         $('.errorSpan').remove();
@@ -59,30 +59,29 @@ $(document).ready(function() {
         var userName = $('#userName').val();
         var reg = /^[а-яА-ЯёЁa-zA-Z -]+$/;
         var err = '';
-        if(userName.length < 2 )  err = "Не менее 2-х символов";
-        if(userName.length > 31) err = "Не более 30 символов";
-        if(!reg.test(userName)) err = 'Только буквы русского и латинского алфавита, знак "-" (дефис), пробел';
+        if (userName.length < 2)  err = "Не менее 2-х символов";
+        if (userName.length > 31) err = "Не более 30 символов";
+        if (!reg.test(userName)) err = 'Только буквы русского и латинского алфавита, знак "-" (дефис), пробел';
         //если ошибка есть, показываем ее через showError();
         //функция возвращает true, поэтому помечаем что ошибки errors есть
-        if(err) errors = showError('userName', err);
+        if (err) errors = showError('userName', err);
 
         //проверка email
         var email = $('#email').val();
         emailReg = /^[\w]{1}[\w-\.]*@[\w-]+\.[a-z]{2,4}$/i;
-        if(!emailReg.test(email) || email == '')
-        {
+        if (!emailReg.test(email) || email == '') {
             errors = showError('email', "Пожалуйста, введите ваш e-mail");
         }
         //проверяем, добавлена ли задача. если добавлена, то не более 5000 символов
         var task = $('#task').val();
-        if(task == '') errors = showError('task', 'Пожалуйста, добавьте задачу');
-        if(task.length > 5000) errors = showError('task', 'Не более 5000 символов');
+        if (task == '') errors = showError('task', 'Пожалуйста, добавьте задачу');
+        if (task.length > 5000) errors = showError('task', 'Не более 5000 символов');
 
         //проверяем были ли ошибки при добавлении файла. если были - показываем
-        if(imgError) errors = showError('userImage', imgError);
+        if (imgError) errors = showError('userImage', imgError);
 
         //если были ошибки при заполнении полей, то выходим
-        if(errors) return false;
+        if (errors) return false;
 
         //если ошибок не было, убираем модаль, заполняем поля предпросмотра и показываем его
         $('#addModal').modal('hide');
@@ -92,18 +91,18 @@ $(document).ready(function() {
         pF.find('.task').text(task);
         pF.show();
         return false;
-
-
     }); //< конец действий при нажитии предпросмотра-------------
 
     //----------сохранение задачи -----------------
+
+    // по клику сохранить в preview
     $('.savePreview').click(function () {
         $('#addForm').submit();
         return false;
     });
-
+    // отправляем ajax запрос с данными из формы. 
+    // если были ошибки покажем их. если нет - обновим страницу
     $('#addForm').submit(function () {
-
         var errors = false;
         //при повторной отправке удаляем все ошибки
         $('.errorSpan').remove();
@@ -122,17 +121,29 @@ $(document).ready(function() {
             processData: false,
             contentType: false,
             data: data,
-            success: function(data){
-                if(data == 'success') location.reload();
+            success: function (data) {
+                if (data == 'success') location.reload();
                 errors = JSON.parse(data);
-                for(var field in errors){
+                for (var field in errors) {
                     showError(field, errors[field]);
                 }
                 $('#addModal').modal('show');
             }
         });
-
         return false;
+    });//<--------конец сохранение задачи -----------------
+
+    //----------              сортировка          -----------------
+    $('.sort').click(function () {
+        var sortBy = $(this).data('sort');
+        $.ajax({
+            type: "POST",
+            url: "/task/sortBy",
+            data: {'sortBy': sortBy},
+            success: function (msg) {
+                if (msg == 'success') location.reload();
+            }
+        });
     });
 
     //****************** когда зашли под админом **********************
@@ -144,16 +155,19 @@ $(document).ready(function() {
         $.ajax({
             type: "POST",
             url: "/task/complete",
-            data: {'id' : taskId,
-                'complete' : +complete},
-            success: function(msg){
-                if(msg != 'success'){
+            data: {
+                'id': taskId,
+                'complete': +complete
+            },
+            success: function (msg) {
+                if (msg != 'success') {
                     alert("не удалось. попробуйте позже");
                     checked.prop("checked", !complete);
                 } else location.reload();
             }
         });
     });
+    // нажали редактировать задачу. в модаль добавили текст в textarea
     $('.editTask').click(function () {
         var taskId = $(this).data('id');
         var editedTask = $('#task_' + taskId).find('.showTask').text();
@@ -162,17 +176,20 @@ $(document).ready(function() {
         $('#changeModal').find('input[name="id"]').val(taskId);
         return false;
     });
-    window.onscroll = function() {
+    //при перезагрузке страницы остаемся на том же месте
+    window.onscroll = function () {
         localStorage.setItem('value', window.pageYOffset);
     };
     localStorage.getItem('value') && window.scrollTo(0, localStorage.getItem('value'));
+
+    // ------------------ отображение ошибок ----------------------------------
     /**
      * функция выводит ошибки при заполнении полей.
      * @param fieldName - поле в котором у нас ошибка
      * @param err - текст ошибки
      * @returns {boolean} true
      */
-    var showError = function(fieldName, err) {
+    var showError = function (fieldName, err) {
         //создаем поле для вывода ошибок. его будем клонировать
         errorField = $('<span class="errorSpan help-block"><strong></strong></span>');
         //выводим ошибку

@@ -60,6 +60,11 @@ class Router
 
                 // Создаем объект, вызваем action
                 $controllerObject = new $controllerName;
+                // если метода нет, показываем 404
+                if (!method_exists($controllerName, $actionName)){
+                    $actionName = 'showErrorPage404';
+                    $parameters = [];
+                }
                 $result = call_user_func_array(array($controllerObject, $actionName), $parameters);
                 if ($result != null) {
                     break;

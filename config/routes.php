@@ -1,5 +1,7 @@
 <?php
-
+/**
+ * здесь прописываем маршруты
+ */
 return array(
 
     //путь => контроллер@action
@@ -8,7 +10,9 @@ return array(
     'task/add' => 'TaskController@addTask',
     'task/complete' => 'TaskController@checkComplete',
     'task/change' => 'TaskController@changeTask',
+    'task/sortBy' => 'TaskController@setSortBy',
     '' => 'IndexController@index',
+    
 
 
 );

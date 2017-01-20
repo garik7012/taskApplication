@@ -1,6 +1,18 @@
+<?php
+/**
+ * на эту страницу мы попадаем по адресу /task/add
+ * или если у пользователя не работает JS
+ * дает возможность создать задачу без использования скриптов 
+ */
+?>
 <?php include ROOT . '/views/layouts/header.php'; ?>
 <?php
 if(!isset($errors)) $errors = false;
+/**
+ * функция обработки и вывода ошибок 
+ * @param $field - поле, которое мы проверяем на наличие ошибок
+ * @param $errors - массив с ошибками
+ */
 function checkError($field, $errors){
     if(isset($errors[$field])){
         echo '<span class="errorSpan help-block"><strong>'. $errors[$field] .'</strong></span>';
@@ -66,4 +78,4 @@ function checkError($field, $errors){
             </div>
         </div>
     </section>
-
+<?php include ROOT . '/views/layouts/footer.php'; ?>

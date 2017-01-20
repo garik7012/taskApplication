@@ -1,7 +1,8 @@
 <?php
 
 /**
- * 
+ * модель для работы с пользователями
+ * таблица user
  */
 class User
 {
@@ -23,7 +24,7 @@ class User
         $result->execute();
 
         $user = $result->fetch();
-        if ($user) {            
+        if ($user) {
             $_SESSION['user'] = $user;
         }
         return false;

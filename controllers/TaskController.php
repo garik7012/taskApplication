@@ -1,12 +1,17 @@
 <?php
 
 /**
- * Контроллер для добавления задач. 
+ * Контроллер для добавления, изменения задач.
  * В нем же осуществляем проверку поступающих данных перед сохранением
  */
 class TaskController
 {
-    public function addTask(){
+    /**
+     * action для добавления задачи
+     * @return bool
+     */
+    public function addTask()
+    {
         //Создаем массив, в который будем складывать ошибки
         $errors = [];
         //если есть пост запрос
@@ -27,16 +32,16 @@ class TaskController
                 //если задача успешно добавится в БД, то получим true
                 $isAddTaskSuccess = Task::addTask($userName, $email, $task, $image);
                 //если через AJAX
-                if ($isAJAX){
-                    if($isAddTaskSuccess){
+                if ($isAJAX) {
+                    if ($isAddTaskSuccess) {
                         echo 'success';
                         return true;
                     } else exit('Ошибка');
                 } else //если попали не через AJAX
                 {
-                    $isAddTaskSuccess ? header('Location: /'): exit('Ошибка');
+                    $isAddTaskSuccess ? header('Location: /') : exit('Ошибка');
                 }
-            } 
+            }
             //если ошибки в данных были, то они отобразятся на странице
             if ($isAJAX) {
                 echo json_encode($errors);
@@ -50,36 +55,76 @@ class TaskController
         return true;
     }
 
-    public function checkComplete(){        
-        if (isset($_POST['id']) and $_SESSION['user']['isAdmin']) {           
+    /**
+     * action о выполнении задачи
+     * если есть админские права     
+     * @return bool
+     */
+    public function checkComplete()
+    {
+        if (isset($_POST['id']) and $_SESSION['user']['isAdmin']) {
             $id = $_POST['id'];
-            $complete = $_POST['complete'];            
-            if(Task::checkComplete($id, $complete)) echo 'success';
+            $complete = $_POST['complete'];
+            if (Task::markComplete($id, $complete)) echo 'success';
             return true;
         }
         //если пост запроса не было или пользователь без админских прав
         require_once(ROOT . '/views/index.php');
         return true;
     }
-    
-    public function changeTask(){
+
+    /**
+     * action изменение задачи.
+     * если есть админские права
+     * @return bool
+     */
+    public function changeTask()
+    {
         if (isset($_POST['changeTask']) and $_SESSION['user']['isAdmin']) {
             $id = $_POST['id'];
             $task = $_POST['task'];
-            if(Task::changeTask($id, $task)) header('Location: /');
+            if (Task::changeTask($id, $task)) header('Location: /');
             return true;
         }
         //если пост запроса не было или пользователь без админских прав
         require_once(ROOT . '/views/index.php');
         return true;
     }
-    
-    
-    
-    
-    
-    
-    
+
+    /**
+     * action сортировать по
+     * определяем по какому полю будем сортировать
+     * определяем порядок сортировки
+     *           логика:
+     * первый клик - выбираем поле
+     * второй клик - добавляем DESC
+     * третий клик - убираем выборку
+     */
+    public function setSortBy()
+    {
+        if (isset($_POST['sortBy'])) {
+            if (isset($_SESSION['sortBy']) and $_SESSION['sortBy'] == $_POST['sortBy']) {
+                if (isset($_SESSION['DESC'])) {
+                    unset($_SESSION['DESC']);
+                    unset($_SESSION['sortBy']);
+                } else {
+                    $_SESSION['DESC'] = true;
+                }
+            } else {
+                $_SESSION['sortBy'] = $_POST['sortBy'];
+                if (isset($_SESSION['DESC'])) unset($_SESSION['DESC']);
+            }
+            echo 'success';
+            return true;
+        } else header('Location: /');
+    }
+
+
+
+
+
+
+
 //-------------------------------------   Проверочные функции -------------------------------------------------
 
     /*
@@ -87,45 +132,52 @@ class TaskController
      * если ошибок нет, данные запишутся в $userName
      * если ошибки есть - добавятся в $errors
      */
-    private function checkUserName(&$errors, &$userName){
+    private function checkUserName(&$errors, &$userName)
+    {
         if (empty($_POST['userName'])) {
             $errors['userName'] = "Пожалуйста, введите ваше имя";
-        } else if(strlen($_POST['userName']) < 2) {
+        } else if (strlen($_POST['userName']) < 2) {
             $errors['userName'] = "Имя должно состоять хотя бы из двух символов";
-        } else if(strlen($_POST['userName']) > 31) {
+        } else if (strlen($_POST['userName']) > 31) {
             $errors['userName'] = "Имя не должно быть длинее 30 символов";
-        }else if (preg_match("/[^\w\x7F-\xFF\s-]|_|\d/",$_POST['userName'])) {
+        } else if (preg_match("/[^\w\x7F-\xFF\s-]|_|\d/", $_POST['userName'])) {
             $errors['userName'] = 'только буквы русского или латинского алфавита,</br> знак "-" (дефис), пробел';
         } else $userName = strip_tags($_POST['userName']);
     }
+
     //проверка задачи
-    private function checkTask(&$errors, &$task){
-        if(!isset($_POST['task']) or strlen($_POST['task']) == ''){
+    private function checkTask(&$errors, &$task)
+    {
+        if (!isset($_POST['task']) or strlen($_POST['task']) == '') {
             $errors['task'] = "добавьте задачу";
             return;
         }
-        if(strlen($_POST['task']) > 5000) {
+        if (strlen($_POST['task']) > 5000) {
             $errors['task'] = "не более 5000 символов";
-        }else $task = htmlspecialchars($_POST['task']);
+        } else $task = htmlspecialchars($_POST['task']);
     }
+
     //проверка email
-    private function checkEmail(&$errors, &$email){
+    private function checkEmail(&$errors, &$email)
+    {
         if (!filter_var($_POST['email'], FILTER_VALIDATE_EMAIL)) {
             $errors['email'] = "Пожалуйста, введите корректный email адрес";
-        }else{
+        } else {
             $email = $_POST['email'];
         }
     }
+
     /*
      * проверка и сохранение картинки.
      * ресайз если нужен
      */
-    private function checkAndSaveImage(&$errors, &$image){
-        if(!isset($_FILES['userImage'])){
+    private function checkAndSaveImage(&$errors, &$image)
+    {
+        if (!isset($_FILES['userImage'])) {
             $errors['userImage'] = 'добавьте картинку';
             return;
         }
-        if(!is_file($_FILES['userImage']['tmp_name'])){
+        if (!is_file($_FILES['userImage']['tmp_name'])) {
             $errors['userImage'] = 'добавьте картинку';
             return;
         }
@@ -135,7 +187,7 @@ class TaskController
         $types = array('image/gif', 'image/png', 'image/jpeg');
         // Максимальный размер файла
         $size = 6000000;
-    // -------------------Обработка запроса---------------------------
+        // -------------------Обработка запроса---------------------------
         // Проверяем тип файла
         if (!in_array($_FILES['userImage']['type'], $types)) {
             $errors['userImage'] = 'Запрещённый тип файла. Только изображения gif, jpg, png';
@@ -143,44 +195,50 @@ class TaskController
         }
         $imageType = $_FILES['userImage']['type'];
         //Проверяем размер файла
-        if ($_FILES['userImage']['size'] > $size){
-            $errors['userImage'] = 'Слишком большой размер файла. Не более ' .round($size/1024/1024, 1) . ' MB';
+        if ($_FILES['userImage']['size'] > $size) {
+            $errors['userImage'] = 'Слишком большой размер файла. Не более ' . round($size / 1024 / 1024, 1) . ' MB';
             return;
         }
-        if($errors == false and $_FILES['userImage']['error'] == 0){ // проверка на загрузку файла
+        if ($errors == false and $_FILES['userImage']['error'] == 0) { // проверка на загрузку файла
             $fileName = $_FILES["userImage"]["name"];
             //получаем расширение файла
-            $file_ext =  substr(strrchr($fileName, '.'), 1);
+            $file_ext = substr(strrchr($fileName, '.'), 1);
             //создаем уникальное имя файла. предполагаем, что загрузка файлов будет происходить не чаще раза в секунду
             $fileName = time() . "." . $file_ext;
             $target = ROOT . $path . $fileName; // путь для загрузки файла
             //если ошибок не было то пермещаем файл и сразу проверяем удачно ли
-            if(move_uploaded_file($_FILES['userImage']['tmp_name'], $target)){
+            if (move_uploaded_file($_FILES['userImage']['tmp_name'], $target)) {
                 $image = $path . $fileName;
                 @unlink($_FILES['userImage']['tmp_name']); // удаляем временный файл
             }
-            switch($imageType) {
-                case "image/gif": $im = imagecreatefromgif($target); break;
-                case "image/jpeg": $im = imagecreatefromjpeg($target); break;
-                case "image/png": $im = imagecreatefrompng($target); break;
+            switch ($imageType) {
+                case "image/gif":
+                    $im = imagecreatefromgif($target);
+                    break;
+                case "image/jpeg":
+                    $im = imagecreatefromjpeg($target);
+                    break;
+                case "image/png":
+                    $im = imagecreatefrompng($target);
+                    break;
             }
-            if(min(320/imagesx($im), 240/imagesy($im)) < 1) {
-                $ration = imagesx($im)/imagesy($im);
-                if($ration <= 320/240){
+            if (min(320 / imagesx($im), 240 / imagesy($im)) < 1) {
+                $ration = imagesx($im) / imagesy($im);
+                if ($ration <= 320 / 240) {
                     $y = 240;
-                    $x = 240*$ration;
+                    $x = 240 * $ration;
                 } else {
                     $x = 320;
-                    $y = 320/$ration;
+                    $y = 320 / $ration;
                 }
 
                 $im1 = imagecreatetruecolor($x, $y); // создаем картинку
-                imagecopyresampled($im1,$im,0,0,0,0,$x, $y,imagesx($im),imagesy($im));
+                imagecopyresampled($im1, $im, 0, 0, 0, 0, $x, $y, imagesx($im), imagesy($im));
                 imagejpeg($im1, $target, 75); // переводим в jpg
                 imagedestroy($im);
                 imagedestroy($im1);
             }
-        }else if($errors == false){
+        } else if ($errors == false) {
             $errors['userImage'] = 'Ошибка при загрузке файла';
         }
 
